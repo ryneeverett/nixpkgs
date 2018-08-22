@@ -30,6 +30,25 @@ let
       '') cfg.wrappedBinaries)}
     '';
 
+  wrappedPkgs = map (pkg:
+    pkgs.symlinkJoin {
+      name = "firejail-" + pkg.name;
+      paths = [ pkg ];
+      buildInputs = with pkgs; [ tree ];
+      postBuild = ''
+        for bin in $(find "$out/bin" -type l); do
+        oldbin="$(readlink "$bin")" 
+        rm "$bin"
+        cat <<_EOF >"$bin"
+        #!${pkgs.stdenv.shell} -e
+        /run/wrappers/bin/firejail "$oldbin" "\$@"
+        _EOF
+        chmod 0755 "$bin"
+        done
+      '';
+    }
+  ) cfg.wrappedPackages;
+
 in {
   options.programs.firejail = {
     enable = mkEnableOption "firejail";
@@ -78,12 +97,28 @@ in {
         not wrapped if they specify the absolute path to the binary.
       '';
     };
+
+    wrappedPackages = mkOption {
+      type = with types; listOf package;
+      default = [ ];
+      example = literalExample ''
+        [ pkgs.mpv ]
+      '';
+      description = ''
+        Put a package into <option>systemPackages</option>,
+        but wrap its binaries with firejail.
+        Compared to <option>wrappedBinaries</option>,
+        this e.g. has the advantage of providing desktop entries and icons.
+        However, you should be careful about using these packages'
+        libraries as they will not be wrapped.
+      '';
+    };
   };
 
   config = mkIf cfg.enable {
     security.wrappers.firejail.source = "${lib.getBin pkgs.firejail}/bin/firejail";
 
-    environment.systemPackages = [ pkgs.firejail ] ++ [ wrappedBins ];
+    environment.systemPackages = [ pkgs.firejail ] ++ [ wrappedBins ] ++ wrappedPkgs;
   };
 
   meta.maintainers = with maintainers; [ peterhoeg ];
