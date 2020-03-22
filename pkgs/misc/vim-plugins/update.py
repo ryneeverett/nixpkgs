@@ -131,6 +131,9 @@ class Repo:
             new_plugin = plugin_line.format(owner=new_owner, name=new_name)
             self.redirect[old_plugin] = new_plugin
 
+            if new_name != self.name:
+                print(f"Plugin Name Changed: {self.name} -> {new_name}")
+
     def prefetch_git(self, ref: str) -> str:
         data = subprocess.check_output(
             ["nix-prefetch-git", "--fetch-submodules", self.url(""), ref]
@@ -424,13 +427,15 @@ following steps:
     1. Go ahead and commit just the updated expressions as you intended to do:
             git add {output_file}
             git commit -m "vimPlugins: Update"
-    2. Make sure the updated {input_file} is still correctly sorted:
+    2. If any of the plugin names were changed, add the old names as aliases in
+    aliases.nix
+    3. Make sure the updated {input_file} is still correctly sorted:
             sort -udf ./vim-plugin-names > sorted && mv sorted vim-plugin-names
-    3. Run this script again so these changes will be reflected in the
+    4. Run this script again so these changes will be reflected in the
     generated expressions (no need to use the --update-redirects flag again):
             ./update.py
-    4. Commit both {input_file} along with the generated expressions:
-            git add {output_file} {input_file}
+    5. Commit {input_file} along with aliases and generated expressions:
+            git add {output_file} {input_file} aliases.nix
             git commit -m "vimPlugins: Update redirects"
 """
     )
