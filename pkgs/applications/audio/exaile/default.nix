@@ -1,6 +1,6 @@
 { stdenv, lib, fetchFromGitHub
 , gobject-introspection, makeWrapper, wrapGAppsHook
-, gnome3, gtk3, gst_all_1, python3
+, gtk3, gst_all_1, python3
 , gettext ? null, gnome3 ? null, help2man ? null, keybinder3 ? null, libnotify ? null, streamripper ? null, udisks ? null, webkitgtk ? null
 , iconTheme ? gnome3.adwaita-icon-theme
 , deviceDetectionSupport ? true
