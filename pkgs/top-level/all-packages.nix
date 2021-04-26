@@ -20392,6 +20392,8 @@ in
 
   evilvte = callPackage ../applications/misc/evilvte (config.evilvte or {});
 
+  exaile = callPackage ../applications/audio/exaile { };
+
   evilpixie = libsForQt514.callPackage ../applications/graphics/evilpixie { };
 
   exercism = callPackage ../applications/misc/exercism { };
