@@ -34,17 +34,14 @@ let
     pkgs.symlinkJoin {
       name = "firejail-" + pkg.name;
       paths = [ pkg ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
         [[ -d "$out/share/applications" ]] && grep -q -R Exec=/ "$out/share/applications" && \
           >&2 echo -e "\033[1mERROR: ${pkg.name} desktop file cannot be firejailed because it specifies an absolute path to the unwrapped binary. Please use wrappedBinaries or better yet fix the ${pkg.name} desktop file in nixpkgs and/or upstream.\033[0m" && exit 1
-        for bin in $(find "$out/bin" -type l); do
-          oldbin="$(realpath "$bin")"
-          rm "$bin"
-          cat <<_EOF >"$bin"
-        #! ${pkgs.runtimeShell} -e
-        exec /run/wrappers/bin/firejail "$oldbin" "\$@"
-        _EOF
-          chmod 0755 "$bin"
+        rm -rf $out/bin
+        for bin in $(find -H "${pkg}/bin" -type l,f -executable); do
+          makeWrapper "$bin" "$out/bin/$(basename $bin)" \
+            --argv0 /run/wrappers/bin/firejail
         done
       '';
     }
